@@ -21,6 +21,7 @@ In order to use blurio you will need the following software, libraries and modul
 
 ## Usage
 You can use the blur_video.py script directly from your own command line:
+
 `[MyMacBook:~] martin% python3.6 /Users/martin/PycharmProjects/blurio/blur_video.py --faces --plates --input "/Users/martin/Desktop/sample.mp4"`
 
 The script works with the following arguments:
