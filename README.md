@@ -1,2 +1,50 @@
 # blurio
-Python script utilizing the blurit.io-API to blur faces and/or license plates in MP4 videos
+blurio is a Python script utilizing the [blurit.io](https://blurit.io)-API to blur faces and/or license plates in MP4 videos.
+
+I often record my bicycle rides with my action cam and post them on [Twitter](https://mobile.twitter.com/applescripter). But manually pixelating faces and license plates in the videos with iMovie is a very tedious and error prone task. So I was glad when I recently found [blurit.io](https://blurit.io).
+
+They offer an API to blur faces and/or license plates in MP4 videos. The service is not free, but the price is very reasonable. So I wrote this Python script which uploads a MP4 video file to their platform, starts an anonymization task and downloads the blurred version of the video once the task is finished.
+
+You can also use their website and frontend to upload your videos and start tasks. But for my worklfow it is more convenient to process the files from the command line using their API.
+
+Here is one of my Tweets with a blurred video:
+[Tweet with blurred video](https://twitter.com/applescripter/status/1404376063422181382?s=20)
+
+
+## Dependencies
+In order to use blurio you will need the following software, libraries and modules:
+
+* Python 3.6 or higher
+	* [requests](https://pypi.org/project/requests/)
+* A valid client and secret id to use the blurit.io-services
+
+
+## Usage
+You can use the blur_video.py script directly from your own command line:
+`[MyMacBook:~] martin% python3.6 /Users/martin/PycharmProjects/blurio/blur_video.py --faces --plates --input "/Users/martin/Desktop/sample.mp4"`
+
+The script works with the following arguments:
+
+* --faces : Faces will be blurred in the video
+* --plates : License plates will be blurred in the video
+
+(not choosing any of both will result in an error message)
+
++ --input : Path to the MP4 video file yu want to process
+
+The blurred video will be saved at the same location as the source video.
+
+Here is an example:
+
+Source video: `/Users/martin/sample.mp4`
+
+Blurred video: `/Users/martin/sample_blurred.mp4`
+
+Existing files will not be overwritten. Following the above example, if `/Users/martin/sample_blurred.mp4` already exists, the file will be saved to `/Users/martin/sample_blurred_1.mp4`
+
+### Configuration
+The file named *config.py* contains all settings to adjust krano to your own environment:
+
+* client_id : Your blurit.io client id
+* secret_id : Your blurit.io secret id
+* check\_status\_interval : interval in seconds to check for the current status of an anonymization task
