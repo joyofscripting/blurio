@@ -5,7 +5,7 @@ I often record my bicycle rides with my action cam and post them on [Twitter](ht
 
 They offer an API to blur faces and/or license plates in MP4 videos. The service is not free, but the price is very reasonable. So I wrote this Python script which uploads a MP4 video file to their platform, starts an anonymization task and downloads the blurred version of the video once the task is finished.
 
-You can also use their website and frontend to upload your videos and start tasks. But for my worklfow it is more convenient to process the files from the command line using their API.
+You can also use their website and frontend to upload your videos and start tasks. But for my workflow it is more convenient to process the files from the command line using their API.
 
 Here is one of my Tweets with a blurred video:
 [Tweet with blurred video](https://twitter.com/applescripter/status/1404376063422181382?s=20)
