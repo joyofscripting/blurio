@@ -31,7 +31,7 @@ The script works with the following arguments:
 
 (not choosing any of both will result in an error message)
 
-+ --input : Path to the MP4 video file yu want to process
++ --input : Path to the MP4 video file you want to process
 
 The blurred video will be saved at the same location as the source video.
 
