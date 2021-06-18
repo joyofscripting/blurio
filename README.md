@@ -44,7 +44,7 @@ Blurred video: `/Users/martin/sample_blurred.mp4`
 Existing files will not be overwritten. Following the above example, if `/Users/martin/sample_blurred.mp4` already exists, the file will be saved to `/Users/martin/sample_blurred_1.mp4`
 
 ### Configuration
-The file named *config.py* contains all settings to adjust krano to your own environment:
+The file named *config.py* contains all settings to adjust blurio to your own environment:
 
 * client_id : Your blurit.io client id
 * secret_id : Your blurit.io secret id
