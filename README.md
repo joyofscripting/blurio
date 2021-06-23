@@ -43,6 +43,8 @@ Blurred video: `/Users/martin/sample_blurred.mp4`
 
 Existing files will not be overwritten. Following the above example, if `/Users/martin/sample_blurred.mp4` already exists, the file will be saved to `/Users/martin/sample_blurred_1.mp4`
 
+![](http://www.schoolscout24.de/img/blurio/blurio_terminal.png)
+
 ### Configuration
 The file named *config.py* contains all settings to adjust blurio to your own environment:
 
