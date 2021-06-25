@@ -49,7 +49,7 @@ Existing files will not be overwritten. Following the above example, if `/Users/
 ![](http://www.schoolscout24.de/img/blurio/blurio_terminal.png)
 
 ### Configuration
-The file named *config.py* contains all settings to adjust blurio to your own environment:
+The file named *config.py* contains all settings to adjust blurio to your own environment and special needs:
 
 * client_id : Your blurit.io client id
 * secret_id : Your blurit.io secret id
