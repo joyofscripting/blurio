@@ -10,6 +10,9 @@ You can also use their website and frontend to upload your videos and start task
 Here is one of my Tweets with a blurred video:
 [Tweet with blurred video](https://twitter.com/applescripter/status/1404376063422181382?s=20)
 
+Here is a long video with blurred faces and license plates (ca. 780 MB):
+[Video from the bicycle lane on Kottbusser Damm in Berlin](http://www.schoolscout24.de/dwnlds/20210622_kottbusser_damm.mp4)
+
 
 ## Dependencies
 In order to use blurio you will need the following software, libraries and modules:
