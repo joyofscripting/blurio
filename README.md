@@ -51,3 +51,15 @@ The file named *config.py* contains all settings to adjust blurio to your own en
 * client_id : Your blurit.io client id
 * secret_id : Your blurit.io secret id
 * check\_status\_interval : interval in seconds to check for the current status of an anonymization task
+
+## History
+
+### Version 0.1.1
+
+* added a method to refresh an expired bearer token
+* added methods to check for an expired bearer token
+* added a missing task status (sent to server)
+
+### Version 0.1.0
+
+* initial version
