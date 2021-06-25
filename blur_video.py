@@ -1,5 +1,5 @@
 __author__ = 'Martin Michel <martin@joyofscripting.com>'
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 from argparse import ArgumentParser
 import time
@@ -30,18 +30,13 @@ def blur_video(filepath, output_filepath, blur_faces, blur_plates):
 
     while True:
         task_status = blurit.get_task_status(job_id)
+        logger.info(task_status)
 
-        if task_status.succeeded:
-            logger.info('Current status: Succeeded')
+        if task_status.succeeded or task_status.failed:
             break
-        elif task_status.failed:
-            logger.info('Current status: Failed')
-            logger.error('The anonymization task failed: {0}'.format(task_status.error_message))
-            break
-        else:
-            logger.info('Current status: Started')
-            logger.info('Waiting for {0} seconds...'.format(config.check_status_interval))
-            time.sleep(config.check_status_interval)
+
+        logger.info('Waiting for {0} seconds...'.format(config.check_status_interval))
+        time.sleep(config.check_status_interval)
 
     if task_status.succeeded:
         blurit.get_task_result(task_status.result_url, output_filepath)
