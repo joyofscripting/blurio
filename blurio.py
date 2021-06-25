@@ -1,8 +1,9 @@
 __author__ = 'Martin Michel <martin@joyofscripting.com>'
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 import requests
 from pathlib import Path
+from datetime import datetime
 
 import logging
 logger = logging.getLogger(__name__)
@@ -37,15 +38,19 @@ class BlurItTaskResultError(BlurItError):
 class BlurItTaskStatus(object):
     """Contains information of an anonymization task."""
 
-    def __init__(self, json):
+    def __init__(self, job_id, json):
+        self.job_id = job_id
         self.json = json
+        self.sent = False
         self.started = False
         self.succeeded = False
         self.failed = False
         self.result_url = None
         self.error_message = None
 
-        if self.json['status'] == 'Started':
+        if self.json['status'] == 'Sent':
+            self.sent = True
+        elif self.json['status'] == 'Started':
             self.started = True
         elif self.json['status'] == 'Failed':
             self.failed = True
@@ -53,9 +58,27 @@ class BlurItTaskStatus(object):
         elif self.json['status'] == 'Succeeded':
             self.succeeded = True
             self.result_url = self.json['output_media']
+        elif self.json['status'] == 'Unknown Job':
+            error_message = 'Unknown job id.'.format(self.json)
+            raise BlurItTaskStatusError(error_message)
         else:
             error_message = 'Unknown task status: {0}'.format(self.json)
             raise BlurItTaskStatusError(error_message)
+
+    def __repr__(self):
+        if self.sent:
+            txt = "Status of task for job id {0}: Sent to server".format(self.job_id)
+        elif self.started:
+            txt = "Status of task for job id {0}: Started".format(self.job_id)
+        elif self.succeeded:
+            txt = "Status of task for job id {0}: Succeeded".format(self.job_id)
+        elif self.failed:
+            txt = "Status of task for job id {0}: Failed ({1})".format(self.job_id, self.error_message)
+        else:
+            txt = "Status of task for job id {0}: Unknown".format(self.job_id)
+
+        return txt
+
 
 
 class BlurIt(object):
@@ -67,6 +90,7 @@ class BlurIt(object):
     """
 
     urllogin = 'https://api.services.wassa.io/login'
+    urltoken = 'https://api.services.wassa.io/token'
     urltask = 'https://api.services.wassa.io/innovation-service/anonymization'
     urlresult = 'https://api.services.wassa.io/innovation-service/result/'
 
@@ -74,6 +98,10 @@ class BlurIt(object):
         self.client_id = client_id
         self.secret_id = secret_id
         self.token = None
+        self.expire_time = None
+        self.refresh_token = None
+        self.token_creation_date = None
+        self.logged_in = False
         self._prices_per_mb = {'0-1GB': 0.02, '>1GB': 0.01}
         self._currency = '€'
 
@@ -103,10 +131,11 @@ class BlurIt(object):
         response = requests.post(BlurIt.urllogin, json={"clientId": self.client_id, "secretId": self.secret_id})
         status_code = response.status_code
 
+        logger.debug('Response: {0}'.format(response.content))
+
         if status_code != 200:
             try:
                 content = response.json()
-                logger.debug(content)
             except ValueError:
                 raise BlurItError('Unable to parse response, invalid JSON.')
 
@@ -121,8 +150,63 @@ class BlurIt(object):
 
         try:
             self.token = response.json()['token']
+            self.expire_time = response.json()['expireTime']
+            self.refresh_token = response.json()['refreshToken']
+            self.token_creation_date = datetime.now()
+            self.logged_in = True
             logger.info('Successfully retrieved bearer token.')
             logger.debug('Bearer token: {0}'.format(self.token))
+        except ValueError:
+            raise BlurItError('Unable to parse response, invalid JSON.')
+        except AttributeError:
+            raise BlurItAuthError('Unable to obtain bearer token.')
+
+    def refresh_expired_token(self):
+        """Tries to refresh an expired bearer token.
+
+        Raises:
+            BlurItError: In case an unexpected error occurs
+            BlurItAuthError: In case of authentication errors
+        """
+        if not self.logged_in:
+            error_message = "No refresh token found. You need to call login() first."
+            raise BlurItAuthError(error_message)
+
+        logger.info('Trying to refresh the expired bearer token...')
+
+        headers = {
+            'accept': 'application/json',
+            'Authorization': 'Bearer ' + self.token
+        }
+
+        response = requests.post(BlurIt.urltoken, json={"refreshToken": self.refresh_token}, headers=headers)
+        status_code = response.status_code
+
+        logger.debug('Response: {0}'.format(response.content))
+
+        if status_code != 200:
+            try:
+                content = response.json()
+            except ValueError:
+                raise BlurItError('Unable to parse response, invalid JSON.')
+
+            if content.get('error') is not None:
+                error_message = 'Could not retrieve refreshed bearer token.'
+                error_code = content['statusCode']
+                error_type = content['error']
+
+                raise BlurItAuthError(error_message, error_type=error_type, error_code=error_code)
+            else:
+                raise BlurItError('An unknown error occurred.')
+
+        try:
+            self.token = response.json()['token']
+            self.expire_time = response.json()['expireTime']
+            self.refresh_token = response.json()['refreshToken']
+            self.token_creation_date = datetime.now()
+            self.logged_in = True
+            logger.info('Successfully refreshed bearer token.')
+            logger.debug('Refreshed bearer token: {0}'.format(self.token))
         except ValueError:
             raise BlurItError('Unable to parse response, invalid JSON.')
         except AttributeError:
@@ -145,7 +229,7 @@ class BlurIt(object):
             BlurItAuthError: In case of authentication errors
             BlurItTaskError: In case of task specific errors
         """
-        if not self.token:
+        if not self.logged_in:
             error_message = "No bearer token found. You need to call login() first."
             raise BlurItAuthError(error_message)
 
@@ -184,10 +268,11 @@ class BlurIt(object):
             error_message = 'Could not process given file: {0}'.format(err)
             raise BlurItTaskError(error_message)
 
+        logger.debug('Response: {0}'.format(response.content))
+
         if status_code != 200:
             try:
                 content = response.json()
-                logger.debug(content)
             except ValueError:
                 raise BlurItError('Unable to parse response, invalid JSON.')
 
@@ -221,8 +306,13 @@ class BlurIt(object):
 
         Raises:
             BlurItError: In case an unexpected error occurs
+            BlurItAuthError: In case of authentication errors
             BlurItTaskStatusError: In case of task status specific errors
         """
+        if not self.logged_in:
+            error_message = "No bearer token found. You need to call login() first."
+            raise BlurItAuthError(error_message)
+
         logger.info('Getting current status of anonymization task...')
 
         headers = {
@@ -237,10 +327,11 @@ class BlurIt(object):
         response = requests.get(BlurIt.urltask, headers=headers, params=params)
         status_code = response.status_code
 
+        logger.debug('Response: {0}'.format(response.content))
+
         if status_code != 200:
             try:
                 content = response.json()
-                logger.debug(content)
             except ValueError:
                 raise BlurItError('Unable to parse response, invalid JSON.')
 
@@ -255,8 +346,7 @@ class BlurIt(object):
 
         try:
             logger.info('Successfully retrieved the current status.')
-            logger.debug(response.json())
-            return BlurItTaskStatus(response.json())
+            return BlurItTaskStatus(job_id, response.json())
         except ValueError:
             raise BlurItError('Unable to parse response, invalid JSON.')
         except AttributeError:
@@ -271,8 +361,13 @@ class BlurIt(object):
 
         Raises:
             BlurItError: In case an unexpected error occurs
+            BlurItAuthError: In case of authentication errors
             BlurItTaskResultError: In case of task result specific errors
         """
+        if not self.logged_in:
+            error_message = "No bearer token found. You need to call login() first."
+            raise BlurItAuthError(error_message)
+
         logger.info('Downloading the blurred video...')
         headers = {
             'accept': '*/*',
@@ -282,10 +377,11 @@ class BlurIt(object):
         response = requests.get(result_url, headers=headers)
         status_code = response.status_code
 
+        #logger.debug('Response: {0}'.format(response.content))
+
         if status_code != 200:
             try:
                 content = response.json()
-                logger.debug(content)
             except ValueError:
                 raise BlurItError('Unable to parse response, invalid JSON.')
 
@@ -307,3 +403,42 @@ class BlurIt(object):
         except IOError as err:
             error_message = 'Could not save file: {0}'.format(err)
             raise BlurItTaskResultError(error_message)
+
+    def token_seconds_left(self):
+        """Returns the seconds left before the bearer token will expire.
+
+        Returns:
+            seconds_left (int): seconds left before the bearer token will expire
+
+        Raises:
+            BlurItAuthError: In case of authentication errors
+        """
+        if not self.logged_in:
+            error_message = "No bearer token found. You need to call login() first."
+            raise BlurItAuthError(error_message)
+
+        now = datetime.now()
+        difference = (now - self.token_creation_date)
+        diff_seconds = difference.total_seconds()
+
+        seconds_left = int(self.expire_time - diff_seconds)
+
+        if seconds_left < 0:
+            return 0
+        else:
+            return seconds_left
+
+    def token_is_expired(self):
+        """Indicates if the bearer token is expired or not.
+
+        Returns:
+            is_expired (boolean): Boolean flag indicating whether the bearer token is expired or not
+
+        Raises:
+            BlurItAuthError: In case of authentication errors
+        """
+        seconds_left = self.token_seconds_left()
+        if seconds_left == 0:
+            return True
+        else:
+            return False
