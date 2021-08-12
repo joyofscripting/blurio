@@ -34,6 +34,10 @@ The script works with the following arguments:
 
 (not choosing any of both will result in an error message)
 
+* --costs : The costs for processing the video will be calculated (without actually processing the video)
+
+(you do not need to use the arguments --faces and/or --plates when using --costs)
+
 + --input : Path to the MP4 video file you want to process
 
 The blurred video will be saved at the same location as the source video.
