@@ -1,5 +1,5 @@
 __author__ = 'Martin Michel <martin@joyofscripting.com>'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 from argparse import ArgumentParser
 import time
@@ -78,6 +78,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("-f", "--faces", action="store_true",  help="blur faces in video")
     parser.add_argument("-p", "--plates", action="store_true", help="blur plates in video")
+    parser.add_argument("-c", "--costs", action="store_true", help="calculate costs for processing the video (wo processing the video)")
     parser.add_argument("-i", "--input", dest="filepath", required=True, help="input video file in mp4 format")
     args = parser.parse_args()
 
@@ -89,6 +90,15 @@ if __name__ == '__main__':
     elif not path.is_file():
         error_message = "The given input file does not point to a file: {0}".format(args.filepath)
         logger.error(error_message)
+        sys.exit()
+
+    if args.costs:
+        calculated_costs = blurio.BlurIt.calculate_costs(path)
+        logger.info('Video file size: {0}'.format(calculated_costs['filesize_human_readable']))
+
+        for costs_item in calculated_costs['costs']:
+            logger.info('Estimated cost ({0}): {1}'.format(costs_item['range_size'], costs_item['total_price']))
+
         sys.exit()
 
     if not args.faces and not args.plates:
