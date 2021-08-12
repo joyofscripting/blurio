@@ -1,5 +1,5 @@
 __author__ = 'Martin Michel <martin@joyofscripting.com>'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 import requests
 from pathlib import Path
@@ -94,6 +94,52 @@ class BlurIt(object):
     urltask = 'https://api.services.wassa.io/innovation-service/anonymization'
     urlresult = 'https://api.services.wassa.io/innovation-service/result/'
 
+    prices_per_mb = {'0-1GB': 0.02, '>1GB': 0.01}
+    currency = '€'
+
+    @staticmethod
+    def calculate_costs(path):
+        """Calculated the estimated costs for the anonymization task.
+
+        Args:
+            path (Path): Path to the input file (instance of a Path object from pathlib)
+
+        Returns:
+            info_costs (dict): A dictionary with informations about the estimated costs
+        """
+        calculated_costs = {'filesize': None, 'filesize_mb': None, 'filesize_human_readable': None, 'costs': []}
+
+        filesize = path.stat().st_size
+        filesize_mb = ((filesize / 1024.0) / 1024.0)
+        filesize_human_readable = BlurIt._human_readable_size(filesize, 2)
+        calculated_costs['filesize'] = filesize
+        calculated_costs['filesize_mb'] = filesize_mb
+        calculated_costs['filesize_human_readable'] = filesize_human_readable
+
+        for range_size, price_per_mb in BlurIt.prices_per_mb.items():
+            total_price = '{0}{1}'.format(round((price_per_mb * filesize_mb), 2), BlurIt.currency)
+            costs_record = {'range_size': range_size, 'total_price': total_price}
+            calculated_costs['costs'].append(costs_record)
+
+        return calculated_costs
+
+    @staticmethod
+    def _human_readable_size(size, decimal_places):
+        """"Returns a human readable file size.
+
+        Args:
+            size (number): File size to be converted into a human readable file size
+            decimal_places (int): Number of decimal places that should be displayed
+
+        Returns:
+            human_readable_size (str): A human readable file size
+        """
+        for unit in ['','KB','MB','GB','TB']:
+            if size < 1024.0:
+                break
+            size /= 1024.0
+        return f"{size:.{decimal_places}f}{unit}"
+
     def __init__(self, client_id, secret_id):
         self.client_id = client_id
         self.secret_id = secret_id
@@ -105,18 +151,18 @@ class BlurIt(object):
         self._prices_per_mb = {'0-1GB': 0.02, '>1GB': 0.01}
         self._currency = '€'
 
+
     def _log_costs(self, path):
         """Logs the estimated costs for the anonymization task.
 
         Args:
             path (Path): Path to the input file (instance of a Path object from pathlib)
         """
-        filesize = path.stat().st_size
-        filesize_mb = ((filesize / 1024.0) / 1024.0)
+        calculated_costs = self.calculate_costs(path)
+        logger.info('Video file size: {0}'.format(calculated_costs['filesize_human_readable']))
 
-        for range_size, price_per_mb in self._prices_per_mb.items():
-            total_price = round((price_per_mb * filesize_mb), 2)
-            logger.info('Estimated cost ({0}): {1}{2}'.format(range_size, total_price, self._currency))
+        for costs_item in calculated_costs['costs']:
+            logger.info('Estimated cost ({0}): {1}'.format(costs_item['range_size'], costs_item['total_price']))
 
 
     def login(self):
