@@ -61,6 +61,10 @@ The file named *config.py* contains all settings to adjust blurio to your own en
 
 ## History
 
+### Version 0.1.2
+
+* new --costs argument, using it will only calculate the video processing costs, but not actually process the video
+
 ### Version 0.1.1
 
 * added a method to refresh an expired bearer token
