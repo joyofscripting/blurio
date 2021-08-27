@@ -1,5 +1,5 @@
 __author__ = 'Martin Michel <martin@joyofscripting.com>'
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 from argparse import ArgumentParser
 import time
@@ -15,7 +15,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 
-def blur_video(filepath, output_filepath, blur_faces, blur_plates):
+def blur_video(filepath, output_filepath, blur_faces, blur_plates, check_status_interval):
     """Blurs the faces and/or license plates in a given video mp4 file.
 
     Args:
@@ -23,6 +23,7 @@ def blur_video(filepath, output_filepath, blur_faces, blur_plates):
         output_filepath (str): Path where the blurred version of the video should be saved
         blur_faces (bool): Should the faces in the video be blurred?
         blur_plates (bool): Should the license plates in the video be blurred?
+        check_status_interval (int): How many seconds should be waited before another status check is performed?
     """
     blurit = blurio.BlurIt(config.client_id, config.secret_id)
     blurit.login()
@@ -35,8 +36,8 @@ def blur_video(filepath, output_filepath, blur_faces, blur_plates):
         if task_status.succeeded or task_status.failed:
             break
 
-        logger.info('Waiting for {0} seconds...'.format(config.check_status_interval))
-        time.sleep(config.check_status_interval)
+        logger.info('Waiting for {0} seconds...'.format(check_status_interval))
+        time.sleep(check_status_interval)
 
     if task_status.succeeded:
         blurit.get_task_result(task_status.result_url, output_filepath)
@@ -74,37 +75,38 @@ def get_output_filepath(filepath):
     return output_filepath
 
 
-if __name__ == '__main__':
+def get_chosen_options(args):
     parser = ArgumentParser()
-    parser.add_argument("-f", "--faces", action="store_true",  help="blur faces in video")
+    parser.add_argument("-f", "--faces", action="store_true", help="blur faces in video")
     parser.add_argument("-p", "--plates", action="store_true", help="blur plates in video")
     parser.add_argument("-c", "--costs", action="store_true", help="calculate costs for processing the video (wo processing the video)")
     parser.add_argument("-i", "--input", dest="filepath", required=True, help="input video file in mp4 format")
-    args = parser.parse_args()
+    chosen_options = parser.parse_args(args)
+    return chosen_options
 
-    path = Path(args.filepath)
+
+def main(args):
+    chosen_options = get_chosen_options(args)
+
+    path = Path(chosen_options.filepath)
     if not path.exists():
-        error_message = "The given input file does not exist: {0}".format(args.filepath)
-        logger.error(error_message)
-        sys.exit()
+        error_message = "The given input file does not exist: {0}".format(chosen_options.filepath)
+        raise FileNotFoundError(error_message)
     elif not path.is_file():
-        error_message = "The given input file does not point to a file: {0}".format(args.filepath)
-        logger.error(error_message)
-        sys.exit()
+        error_message = "The given input file does not point to a file: {0}".format(chosen_options.filepath)
+        raise FileNotFoundError(error_message)
 
-    if args.costs:
+    if chosen_options.costs:
         calculated_costs = blurio.BlurIt.calculate_costs(path)
         logger.info('Video file size: {0}'.format(calculated_costs['filesize_human_readable']))
 
         for costs_item in calculated_costs['costs']:
             logger.info('Estimated cost ({0}): {1}'.format(costs_item['range_size'], costs_item['total_price']))
+    else:
+        output_filepath = get_output_filepath(chosen_options.filepath)
+        blur_video(chosen_options.filepath, output_filepath, chosen_options.faces, chosen_options.plates, config.check_status_interval)
 
-        sys.exit()
 
-    if not args.faces and not args.plates:
-        error_message = "You decided not to blur faces and plates in the video. That makes no sense."
-        logger.error(error_message)
-        sys.exit()
-
-    output_filepath = get_output_filepath(args.filepath)
-    blur_video(args.filepath, output_filepath, args.faces, args.plates)
+if __name__ == '__main__':
+    args = sys.argv[1:]
+    main(args)
