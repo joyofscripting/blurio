@@ -64,7 +64,7 @@ The file named *config.py* contains all settings to adjust blurio to your own en
 ### Version 0.1.3
 
 * only minor changes to clean up the code
-* added a test.py file with unit tests
+* added a tests.py file with unit tests
 
 ### Version 0.1.2
 
