@@ -61,6 +61,11 @@ The file named *config.py* contains all settings to adjust blurio to your own en
 
 ## History
 
+### Version 0.1.3
+
+* only minor changes to clean up the code
+* added a test.py file with unit tests
+
 ### Version 0.1.2
 
 * new --costs argument, using it will only calculate the video processing costs, but not actually process the video
