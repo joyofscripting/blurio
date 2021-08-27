@@ -1,5 +1,5 @@
 __author__ = 'Martin Michel <martin@joyofscripting.com>'
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 import requests
 from pathlib import Path
@@ -32,6 +32,9 @@ class BlurItTaskStatusError(BlurItError):
     pass
 
 class BlurItTaskResultError(BlurItError):
+    pass
+
+class BlurItOptionsError(BlurItError):
     pass
 
 
@@ -279,6 +282,10 @@ class BlurIt(object):
             error_message = "No bearer token found. You need to call login() first."
             raise BlurItAuthError(error_message)
 
+        if not blur_faces and not blur_plates:
+            error_message = "You decided not to blur faces and plates in the video. That makes no sense."
+            raise BlurItOptionsError(error_message)
+
         logger.info('Starting anonymization task...')
 
         input_path = Path(filepath)
@@ -302,6 +309,8 @@ class BlurIt(object):
                 'activation_plates_blur': str(blur_plates).lower(),
                 'included_area': included_area
                 }
+
+        logger.info('Uploading video file...')
 
         try:
             with open(filepath, 'rb') as filecont:
@@ -330,6 +339,8 @@ class BlurIt(object):
                 raise BlurItTaskError(error_message, error_type=error_type, error_code=error_code)
             else:
                 raise BlurItError('An unknown error occurred.')
+
+        logger.info('Video file upload finished.')
 
         try:
             anonymization_job_id = response.json()['anonymization_job_id']
