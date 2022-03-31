@@ -10,8 +10,8 @@ You can also use their website and frontend to upload your videos and start task
 Here is one of my Tweets with a blurred video:
 [Tweet with blurred video](https://twitter.com/applescripter/status/1404376063422181382?s=20)
 
-Here is a video with blurred faces and license plates (ca. 780 MB):
-[Riding through Berlin-Friedrichshain on a kickbike](http://www.schoolscout24.de/dwnlds/20220330 Rollerfahrt_processed_20220330060850z.mp4)
+Here is a video with blurred faces and license plates (ca. 304 MB):
+[Riding through Berlin-Friedrichshain on a kickbike](http://www.schoolscout24.de/dwnlds/20220330_Rollerfahrt_processed_20220330060850z.mp4)
 
 
 ## Dependencies
