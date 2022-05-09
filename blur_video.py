@@ -1,5 +1,5 @@
 __author__ = 'Martin Michel <martin@joyofscripting.com>'
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 from argparse import ArgumentParser
 import time
@@ -15,7 +15,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 
-def blur_video(filepath, output_filepath, blur_faces, blur_plates, check_status_interval):
+def blur_video(filepath, output_filepath, blur_faces, blur_plates, output_detections_url, check_status_interval):
     """Blurs the faces and/or license plates in a given video mp4 file.
 
     Args:
@@ -23,11 +23,12 @@ def blur_video(filepath, output_filepath, blur_faces, blur_plates, check_status_
         output_filepath (str): Path where the blurred version of the video should be saved
         blur_faces (bool): Should the faces in the video be blurred?
         blur_plates (bool): Should the license plates in the video be blurred?
+        output_detections_url (bool): Should you get the JSON of positions of faces blurred?
         check_status_interval (int): How many seconds should be waited before another status check is performed?
     """
     blurit = blurio.BlurIt(config.client_id, config.secret_id)
     blurit.login()
-    job_id = blurit.start_task(filepath, blur_faces=blur_faces, blur_plates=blur_plates)
+    job_id = blurit.start_task(filepath, blur_faces=blur_faces, blur_plates=blur_plates, output_detections_url=output_detections_url)
 
     while True:
         task_status = blurit.get_task_status(job_id)
@@ -41,6 +42,9 @@ def blur_video(filepath, output_filepath, blur_faces, blur_plates, check_status_
 
     if task_status.succeeded:
         blurit.get_task_result(task_status.result_url, output_filepath)
+        if task_status.json_url:
+            json_filepath = Path(output_filepath).with_suffix('.json')
+            blurit.get_task_result(task_status.json_url, json_filepath)
 
 
 def get_output_filepath(filepath):
@@ -80,6 +84,7 @@ def get_chosen_options(args):
     parser.add_argument("-f", "--faces", action="store_true", help="blur faces in video")
     parser.add_argument("-p", "--plates", action="store_true", help="blur plates in video")
     parser.add_argument("-c", "--costs", action="store_true", help="calculate costs for processing the video (wo processing the video)")
+    parser.add_argument("-d", "--detections", action="store_true", help="get a JSON with positions of blurred faces")
     parser.add_argument("-i", "--input", dest="filepath", required=True, help="input video file in mp4 format")
     chosen_options = parser.parse_args(args)
     return chosen_options
@@ -104,7 +109,7 @@ def main(args):
             logger.info('Estimated cost ({0}): {1}'.format(costs_item['range_size'], costs_item['total_price']))
     else:
         output_filepath = get_output_filepath(chosen_options.filepath)
-        blur_video(chosen_options.filepath, output_filepath, chosen_options.faces, chosen_options.plates, config.check_status_interval)
+        blur_video(chosen_options.filepath, output_filepath, chosen_options.faces, chosen_options.plates, chosen_options.detections ,config.check_status_interval)
 
 
 if __name__ == '__main__':
