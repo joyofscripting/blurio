@@ -38,6 +38,8 @@ The script works with the following arguments:
 
 (you do not need to use the arguments --faces and/or --plates when using --costs)
 
+* --detections: A JSON file containing the positions of the faces blurred in the video will be downloaded additionally
+
 + --input : Path to the MP4 video file you want to process
 
 The blurred video will be saved at the same location as the source video.
@@ -60,6 +62,11 @@ The file named *config.py* contains all settings to adjust blurio to your own en
 * check\_status\_interval : interval in seconds to check for the current status of an anonymization task
 
 ## History
+
+### Version 0.1.4
+
+* some minor bug fixes
+* now supports the output_detections_url option to additionally download a JSON file containing the positions of faces blurred in the processed video
 
 ### Version 0.1.3
 
