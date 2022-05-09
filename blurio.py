@@ -49,6 +49,7 @@ class BlurItTaskStatus(object):
         self.succeeded = False
         self.failed = False
         self.result_url = None
+        self.json_url = None
         self.error_message = None
 
         if self.json['status'] == 'Sent':
@@ -61,6 +62,8 @@ class BlurItTaskStatus(object):
         elif self.json['status'] == 'Succeeded':
             self.succeeded = True
             self.result_url = self.json['output_media']
+            if 'output_json' in self.json.keys():
+                self.json_url = self.json['output_json']
         elif self.json['status'] == 'Unknown Job':
             error_message = 'Unknown job id.'.format(self.json)
             raise BlurItTaskStatusError(error_message)
@@ -261,13 +264,14 @@ class BlurIt(object):
         except AttributeError:
             raise BlurItAuthError('Unable to obtain bearer token.')
 
-    def start_task(self, filepath, blur_faces=True, blur_plates=True, included_area=''):
+    def start_task(self, filepath, blur_faces=True, blur_plates=True, output_detections_url=False, included_area=None):
         """Starts an anonymization task to blur the faces and/or license plates in a video.
 
         Args:
             filepath (str): Path to the video file in mp4 format
             blur_faces (bool): Should the faces in the video be blurred?
             blur_plates (bool): Should the license plates in the video be blurred?
+            output_detections_url (bool): Should you get the JSON of positions of faces blurred?
             included_area (str): A rectangular area to precise which area need to be processed, e.g. {"left": 0, "right": 0,5, "top": 0, "bottom": 1}
 
         Returns:
@@ -307,6 +311,7 @@ class BlurIt(object):
 
         data = {'activation_faces_blur': str(blur_faces).lower(),
                 'activation_plates_blur': str(blur_plates).lower(),
+                'output_detections_url': str(output_detections_url).lower(),
                 'included_area': included_area
                 }
 
@@ -434,7 +439,7 @@ class BlurIt(object):
         response = requests.get(result_url, headers=headers)
         status_code = response.status_code
 
-        #logger.debug('Response: {0}'.format(response.content))
+        logger.debug('Response: {0}'.format(response.content))
 
         if status_code != 200:
             try:
@@ -456,7 +461,7 @@ class BlurIt(object):
                 for chunk in response.iter_content(chunk_size=255):
                     if chunk:
                         filecont.write(chunk)
-            logger.info('Successfully downloaded the blurred video to {0}.'.format(filepath))
+            logger.info('Successfully downloaded the result to {0}.'.format(filepath))
         except IOError as err:
             error_message = 'Could not save file: {0}'.format(err)
             raise BlurItTaskResultError(error_message)
