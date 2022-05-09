@@ -3,7 +3,7 @@ blurio is a Python script utilizing the [blurit.io](https://blurit.io)-API to bl
 
 I often record my bicycle rides with my action cam and post them on [Twitter](https://mobile.twitter.com/applescripter). But manually pixelating faces and license plates in the videos with iMovie is a very tedious and error prone task. So I was glad when I recently found [blurit.io](https://blurit.io).
 
-They offer an API to blur faces and/or license plates in MP4 videos. The service is not free, but the price is very reasonable. So I wrote this Python script which uploads a MP4 video file to their platform, starts an anonymization task and downloads the blurred version of the video once the task is finished.
+They offer an [API](https://api.services.wassa.io/doc/) to blur faces and/or license plates in MP4 videos. The service is not free, but the price is very reasonable. So I wrote this Python script which uploads a MP4 video file to their platform, starts an anonymization task and downloads the blurred version of the video once the task is finished.
 
 You can also use their website and frontend to upload your videos and start tasks. But for my workflow it is more convenient to process the files from the command line using their API.
 
